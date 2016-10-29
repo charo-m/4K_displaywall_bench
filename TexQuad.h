@@ -88,6 +88,7 @@ protected:
 
   unsigned int img_width;
   unsigned int img_height;
+  std::vector<GLubyte> image_data;
 
   GLint uniform_modelview;
   glm::mat4 view;

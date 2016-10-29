@@ -246,9 +246,14 @@ int main (int argc, char* argv[])
   scene -> SetImagePaths (image_paths, do_arrange, do_mipmap);
   scene -> Setup ();
 
+  static double t_start = glfwGetTime ();
   while (!glfwWindowShouldClose (window))
-    { scene -> Draw ();
-      output_fps (window);
+    { if (glfwGetTime () - t_start >= 1.0)
+        t_start = glfwGetTime ();
+      double t = glfwGetTime () - t_start;
+      scene -> SetTime (t);
+      scene -> Draw ();
+      //output_fps (window);
       glfwSwapBuffers (window);
       glfwPollEvents ();
     }

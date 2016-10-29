@@ -80,6 +80,9 @@ public:
       do_arrange = arrange;
       do_mipmap = mipmap; }
 
+  void SetTime (double t)
+    { time = t; }
+
 public:
   enum vertexAttrib {
     vPosition,
@@ -114,9 +117,12 @@ protected:
   glm::mat4 view;
   glm::mat4 projection;
 
+  double time;
+
   GLint uniform_modelview;
   GLint uniform_projection;
   GLint uniform_texture;
+  GLint uniform_time;
 
   std::vector <std::string> image_paths;
   std::vector <TexQuad*> texquads;

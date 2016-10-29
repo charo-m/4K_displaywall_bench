@@ -73,7 +73,6 @@ void TexQuad::Load ()
 {
 
   // Load texture: load image, generate texture, upload texture
-  std::vector<GLubyte> image_data;
   unsigned error = lodepng::decode(image_data, img_width, img_height, img_path.c_str());
 
   if (error)
@@ -106,6 +105,14 @@ void TexQuad::Setup ()
 
 void TexQuad::Update ()
 {
+  // Re-upload
+  glBindTexture (GL_TEXTURE_2D, texName);
+  //glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, img_width, img_height, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  if (do_mipmap)
+    glGenerateMipmap (GL_TEXTURE_2D);
+  glBindTexture (GL_TEXTURE_2D, 0);
+
   // update shader uniforms
   float img_aspect = static_cast<float>(img_width)/static_cast<float>(img_height);
   glm::mat4 scale_mat = glm::scale (glm::mat4 (1.0f), glm::vec3 (scale.x, scale.y, 1.0f));
