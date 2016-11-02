@@ -62,23 +62,11 @@ public:
   void Update ();
   void Draw ();
 
-  void ResetZoom ()
-    { zoom = 1.0f; }
-
-  void IncrementZoom ()
-    { zoom *= 1.1f; }
-
-  void DecrementZoom ()
-    { zoom *= 0.9f; }
-
   void SetWindow (float w, float h)
     { window_width = w;  window_height = h; }
 
-  void SetImagePaths (const std::vector <std::string> &paths,
-                      bool arrange, bool mipmap)
-    { image_paths = paths;
-      do_arrange = arrange;
-      do_mipmap = mipmap; }
+  void SetImagePaths (const std::vector <std::string> &paths)
+    { image_paths = paths; }
 
   void SetTime (double t)
     { time = t; }
@@ -99,8 +87,6 @@ protected:
   float window_width;
   float window_height;
 
-  bool do_arrange;
-  bool do_mipmap;
 
   GLuint vao;
   GLuint index_vbo;
@@ -125,7 +111,10 @@ protected:
   GLint uniform_time;
 
   std::vector <std::string> image_paths;
-  std::vector <TexQuad*> texquads;
+  unsigned int img_width;
+  unsigned int img_height;
+  std::vector<GLubyte> image_data;
+
 };
 
 }

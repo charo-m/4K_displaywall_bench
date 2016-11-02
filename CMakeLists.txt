@@ -25,7 +25,7 @@ else()
   set(dep_flags ${GLFW_CFLAGS_OTHER})
 endif()
 
-add_executable (4K_displaywall_bench main.cpp Scene.cpp TexQuad.cpp png/lodepng.cpp glad/glad.c)
+add_executable (4K_displaywall_bench main.cpp Scene.cpp png/lodepng.cpp glad/glad.c)
 target_include_directories(4K_displaywall_bench PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" ${dep_includes})
 target_compile_definitions(4K_displaywall_bench PRIVATE _USE_MATH_DEFINES)
 target_compile_options(4K_displaywall_bench PRIVATE ${dep_flags})

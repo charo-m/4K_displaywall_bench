@@ -37,12 +37,10 @@
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB 0x8242
 
 namespace proto {
-  int width = 11520;
-  int height = 2160;
+  int width = 3840;
+  int height = 1080;
   int swap_interval = 0;
   int gl_version = 4;
-  bool do_arrange = false;
-  bool do_mipmap = false;
   std::vector <std::string> image_paths;
   Scene *scene;
 }
@@ -57,8 +55,6 @@ void help_msg (std::string prog)
   std::cout << "    -swap_interval [0 (disable vsync) or 1 (enable vsync)]" << std::endl;
   std::cout << "    -gl [3 (OpenGL version 3.3) or 4 (OpenGL version 4.4, default)]" << std::endl;
   std::cout << "    -i [image path] (for each image you want to display)" << std::endl;
-  std::cout << "    -layout [true | false] (true = grid, false = overlap)" << std::endl;
-  std::cout << "    -mipmap [true | false]" << std::endl;
   exit (EXIT_SUCCESS);
 }
 
@@ -92,10 +88,6 @@ void parse_args (int argc, char* argv[])
            gl_version = atoi(argv[i+1]);
          else if (!strcmp(argv[i], "-i"))
            image_paths.push_back(argv[i+1]);
-         else if (!strcmp(argv[i], "-layout"))
-           do_arrange = (!strcmp(argv[i+1], "true")) ? true : false;
-         else if (!strcmp(argv[i], "-mipmap"))
-           do_mipmap = (!strcmp(argv[i+1], "true")) ? true : false;
          else if (!strcmp(argv[i], "-help") ||
                   !strcmp(argv[i], "--help"))
            help_msg (argv[0]);
@@ -119,54 +111,6 @@ static void error_callback (int error, const char* description)
 {
   printf("Error: %s\n", description);
 }
-
-static void key_callback (GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-      glfwSetWindowShouldClose (window, true);
-
-  if (key == GLFW_KEY_HOME && action == GLFW_PRESS)
-      scene -> ResetZoom ();
-
-  if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-      scene -> IncrementZoom ();
-
-  if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-      scene -> DecrementZoom ();
-
-}
-
-static void cursor_pos_callback (GLFWwindow *window, double xpos, double ypos)
-{
-  //printf ("mouse pos %f  x  %f\n", xpos/width, (height - ypos)/height);
-}
-
-static void output_fps (GLFWwindow* window)
-{
-  static double t_start = glfwGetTime ();
-  static int64_t frame_cnt = 0;
-  const double reporting_interval = 1.0;  // in seconds
-
-  double t_curr = glfwGetTime ();
-  if (t_curr - t_start > reporting_interval)
-  { std::cout << "frame count is " << frame_cnt << std::endl;
-    double fps = static_cast<double>(frame_cnt) / (t_curr - t_start);
-    std::ostringstream oss;
-    oss << fps;
-    std::string fps_string = "FPS: ";
-    fps_string += oss.str();
-    std::cout << fps_string << std::endl;
-    Util::query_memory();
-    glfwSetWindowTitle(window, fps_string.c_str());
-    frame_cnt = 0;
-    t_start = glfwGetTime();
-  }
-  else
-  {
-    frame_cnt++;
-  }
-}
-
 
 
 int main (int argc, char* argv[])
@@ -214,12 +158,11 @@ int main (int argc, char* argv[])
   {
     const GLFWvidmode* vmode = glfwGetVideoMode(*monitors);
     std::cout << "video mode for monitor " << i << " reports " <<
-	         vmode->refreshRate << " refresh rate" << std::endl;
+                 vmode->width << "x" << vmode->height << "@" <<
+	         vmode->refreshRate << std::endl;
     monitors++;
   }
 
-  glfwSetKeyCallback (window, key_callback);
-  glfwSetCursorPosCallback (window, cursor_pos_callback);
 
 #ifdef DEBUG
   printf ("%s\n", glGetString (GL_VERSION));
@@ -243,7 +186,7 @@ int main (int argc, char* argv[])
 
   scene = new Scene ();
   scene -> SetWindow (width, height);
-  scene -> SetImagePaths (image_paths, do_arrange, do_mipmap);
+  scene -> SetImagePaths (image_paths);
   scene -> Setup ();
 
   static double t_start = glfwGetTime ();
@@ -253,7 +196,6 @@ int main (int argc, char* argv[])
       double t = glfwGetTime () - t_start;
       scene -> SetTime (t);
       scene -> Draw ();
-      //output_fps (window);
       glfwSwapBuffers (window);
       glfwPollEvents ();
     }

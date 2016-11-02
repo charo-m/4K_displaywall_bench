@@ -56,8 +56,6 @@ Scene::Scene ()
  : zoom(1.0),
    window_width(640.0),
    window_height(480.0),
-   do_arrange(false),
-   do_mipmap(false),
    time (0.0),
    uniform_modelview(-1),
    uniform_projection(-1),
@@ -111,6 +109,24 @@ void Scene::Load ()
   glGenBuffers (1, &index_vbo);
   glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, index_vbo);
   glBufferData (GL_ELEMENT_ARRAY_BUFFER, sizeof(index_array), index_array, GL_STATIC_DRAW);
+
+
+  // Load texture: load image, generate texture, upload texture
+  if (image_paths.size () >= 1)
+   { unsigned error = lodepng::decode(image_data, img_width, img_height, image_paths[0].c_str());
+     if (error)
+       std::cout << "lodepng decode error " << error << ": " << lodepng_error_text(error) << std::endl;
+   }
+
+  glGenTextures (1, &texName);
+  glActiveTexture (GL_TEXTURE0);
+  glBindTexture (GL_TEXTURE_2D, texName);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  glBindTexture (GL_TEXTURE_2D, 0);
 
 
   // Load shaders
@@ -177,86 +193,6 @@ void Scene::Load ()
   glUniform1i (uniform_texture, GL_TEXTURE0 - GL_TEXTURE0);
   glUniform1f (uniform_time, time);
 
-  // make texquads
-  const size_t num_images = image_paths.size();
-  std::cout << "num images " << num_images << " (" << aspect << ")" << std::endl;
-  size_t rows = 0, columns = 0;
-  if (aspect > 1.0)
-   {
-     rows = std::max (1.0, std::floor(double(num_images) / double(aspect)));
-     columns = std::ceil(double(num_images) / double(rows));
-   }
-  else if (aspect < 1.0)
-   {
-     columns = std::max (1.0, std::floor(double(num_images) * double(aspect)));
-     rows = std::ceil(double(num_images) / double(columns));
-   }
-  else
-   {
-     const size_t root = static_cast<size_t> (std::ceil (std::sqrt (num_images)));
-     rows = num_images / root + (num_images % root ? 1 : 0);
-     columns = root;
-   }
-  std::cout << "Geometry: " << columns << " x " << rows << std::endl;
-
-  glm::vec2 starting_scale(1.0f);  // camera set for vertically centered -1 to 1 square
-  if (do_arrange)
-   {
-     size_t maxdim = std::max (rows, columns);
-     size_t mindim = std::min (rows, columns);
-     if (aspect > 1.0) {
-       starting_scale = glm::vec2( std::min( std::floor(aspect) / float(maxdim),
-                                             1.0f / float(mindim)) );
-     } else {
-       starting_scale = glm::vec2( std::min( std::floor(1.0f/aspect) / float(maxdim),
-                                             1.0f / float(mindim)) );
-     }
-   }
-  if (aspect < 1.0)
-    starting_scale *= aspect;
-
-  std::cout << "Starting scale " <<  glm::to_string (starting_scale) << std::endl;
-
-  if (do_arrange)
-   { const float pad = 0.1;
-     const float size = 2.0f + pad;  // square -1 -> 1
-     glm::vec3 pos(0.0f);
-     int i = 0;
-     for (float r = float(rows-1)*0.5; r > -float(rows)*0.5; r -= 1.0f)
-       { std::cout << "row " << r << std::endl;
-         pos.y = size * r;
-         for (float c = -float(columns-1)*0.5; c < float(columns)*0.5; c += 1.0f)
-            { if (i < num_images)
-              { std::cout << "col " << c << std::endl;
-                pos.x = size * c;
-                std::cout << glm::to_string(pos) << std::endl;
-                TexQuad *tq = new TexQuad(image_paths[i],
-                                          aspect,
-                                          pos,
-                                          starting_scale,
-                                          do_mipmap,
-                                          do_arrange);
-                tq -> Setup ();
-                tq -> SetViewMatrix (uniform_modelview, view);
-                texquads.push_back (tq);
-                i++;
-              }
-           }
-       }
-   }
-  else
-   { for (int i = 0; i < image_paths.size(); i++)
-      { TexQuad *tq = new TexQuad(image_paths[i],
-                                  aspect,
-                                  glm::vec3(0.0f),
-                                  starting_scale,
-                                  do_mipmap,
-                                  do_arrange);
-        tq -> Setup ();
-        tq -> SetViewMatrix (uniform_modelview, view);
-        texquads.push_back (tq);
-      }
-   }
 }
 
 void Scene::Unload ()
@@ -268,14 +204,11 @@ void Scene::Unload ()
   glDeleteBuffers (1, &index_vbo);
   glDeleteVertexArrays (1, &vao);
   glBindVertexArray (0);
-
-  for (int i = 0; i < texquads.size(); i++)
-    delete texquads[i];
+  glDeleteTextures (1, &texName);
 }
 
 void Scene::Setup ()
 { Load ();
-  //glClearColor ( 0.0, 0.0, 0.0, 0.0 );  // uncomment for Windows
   glClearColor ( 0.0, 0.1, 0.2, 0.0 );
   glEnable (GL_DEPTH_TEST);
 }
@@ -287,11 +220,10 @@ void Scene::Update ()
 void Scene::Draw ()
 { glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glUniform1f (uniform_time, time);
-  for (int i = 0; i < texquads.size(); i++) {
-    texquads[i] -> Update ();
-    texquads[i] -> Bind ();
-    glDrawElements (GL_TRIANGLE_STRIP, sizeof(index_array)/sizeof(index_array[0]), GL_UNSIGNED_SHORT, 0);
-    texquads[i] -> Unbind ();
-  }
+  glBindTexture (GL_TEXTURE_2D, texName);
+  // Re-upload texture
+  glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, img_width, img_height, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  glDrawElements (GL_TRIANGLE_STRIP, sizeof(index_array)/sizeof(index_array[0]), GL_UNSIGNED_SHORT, 0);
+  glBindTexture (GL_TEXTURE_2D, 0);
 }
 
