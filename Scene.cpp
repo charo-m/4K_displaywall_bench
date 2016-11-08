@@ -31,7 +31,6 @@
 
 
 #include "Scene.h"
-#include "TexQuad.h"
 
 #include <algorithm>
 #include <fstream>
