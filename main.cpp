@@ -271,9 +271,14 @@ int main (int argc, char* argv[])
   scene -> Setup ();
 
   double test_start = glfwGetTime ();
+  double t_start = glfwGetTime ();
   while (!glfwWindowShouldClose (window) &&
          (test_mode.empty() ? true : (glfwGetTime () - test_start < test_length)))
-    { scene -> Draw ();
+    { if (glfwGetTime () - t_start >= 1.0)
+        t_start = glfwGetTime ();
+      double t = glfwGetTime () - t_start;
+      scene -> SetTime (t);
+      scene -> Draw ();
       if (test_mode.empty())
        { output_perf_data (window); }
       else

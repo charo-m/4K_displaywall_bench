@@ -109,7 +109,9 @@ void TexQuad::Load ()
 }
 
 void TexQuad::Unload ()
-{ glDeleteTextures (1, &texName);
+{ if (!Util::in_test_mode)
+    std::cout << "Unloading TexQuad " << img_path << " texture id is " << texName << std::endl;
+  glDeleteTextures (1, &texName);
 }
 
 void TexQuad::Setup ()

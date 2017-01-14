@@ -57,9 +57,11 @@ Scene::Scene ()
    window_height(480.0),
    do_arrange(false),
    do_mipmap(false),
+   time (0.0),
    uniform_modelview(-1),
    uniform_projection(-1),
-   uniform_texture(-1)
+   uniform_texture(-1),
+   uniform_time(-1)
 
 {
 }
@@ -137,6 +139,7 @@ void Scene::Load ()
   uniform_modelview = glGetUniformLocation (program, "u_modelView");
   uniform_projection = glGetUniformLocation (program, "u_projection");
   uniform_texture = glGetUniformLocation (program, "u_texture");
+  uniform_time = glGetUniformLocation (program, "u_time");
 
   if (uniform_modelview == -1 || uniform_projection == -1 || uniform_texture == -1)
     std::cout << "Failed to get a uniform location for one of the shader params" << std::endl;
@@ -171,6 +174,7 @@ void Scene::Load ()
   glUniformMatrix4fv (uniform_modelview, 1, GL_FALSE, glm::value_ptr(modelView));
   glUniformMatrix4fv (uniform_projection, 1, GL_FALSE, glm::value_ptr(projection));
   glUniform1i (uniform_texture, GL_TEXTURE0 - GL_TEXTURE0);
+  glUniform1f (uniform_time, time);
 
   // make texquads
   const size_t num_images = image_paths.size();
@@ -253,7 +257,7 @@ void Scene::Load ()
                                      do_arrange);
                  }
                 if (tq)
-                 { tq -> Setup ();
+                 { //tq -> Setup ();
                    tq -> SetViewMatrix (uniform_modelview, view);
                    texquads.push_back (tq);
                  }
@@ -282,7 +286,7 @@ void Scene::Load ()
                             do_arrange);
          }
         if (tq)
-         { tq -> Setup ();
+         { //tq -> Setup ();
            tq -> SetViewMatrix (uniform_modelview, view);
            texquads.push_back (tq);
          }
@@ -317,11 +321,14 @@ void Scene::Update ()
 
 void Scene::Draw ()
 { glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glUniform1f (uniform_time, time);
   for (int i = 0; i < texquads.size(); i++) {
+    texquads[i] -> Load ();
     texquads[i] -> Update ();
     texquads[i] -> Bind ();
     glDrawElements (GL_TRIANGLE_STRIP, sizeof(index_array)/sizeof(index_array[0]), GL_UNSIGNED_SHORT, 0);
     texquads[i] -> Unbind ();
+    texquads[i] -> Unload ();
   }
 }
 

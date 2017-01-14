@@ -86,7 +86,6 @@ public:
     vTexCoord
   };
 
-protected:
   void Load ();
   void Unload ();
 
