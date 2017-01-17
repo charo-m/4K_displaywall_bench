@@ -203,8 +203,9 @@ int main (int argc, char* argv[])
       exit (EXIT_FAILURE);
 
   // Context configuration
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, gl_version);
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, gl_version);
+  //glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, gl_version);
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint (GLFW_CLIENT_API, GLFW_OPENGL_API);
   // Framebuffer
   glfwWindowHint (GLFW_DEPTH_BITS, 24);   // default

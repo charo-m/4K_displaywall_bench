@@ -1,4 +1,4 @@
-#version 330 core
+#version 410 core
 
 in vec2 v_texcoord;
 in vec2 v_bound;

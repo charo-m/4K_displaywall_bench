@@ -1,11 +1,14 @@
 cmake_minimum_required (VERSION 3.5)
 
+project(4K_displaywall_bench)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 include("cmake/HunterGate.cmake")
 HunterGate(
   URL "https://github.com/ruslo/hunter/archive/v0.16.3.tar.gz"
   SHA1 "9a9ef7e83c822f95de7b32f44114fa1b1edda5d0"
 )
-project(4K_displaywall_bench)
+endif()
 
 if(MSVC)
   hunter_add_package(glfw)
@@ -15,6 +18,7 @@ if(MSVC)
   find_package(glm REQUIRED)
   set(dep_libraries glfw glm)
 else()
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
   find_package(LibDL REQUIRED)
   find_package(PkgConfig REQUIRED)
