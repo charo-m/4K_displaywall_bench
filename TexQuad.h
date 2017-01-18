@@ -58,12 +58,14 @@ public:
            const glm::vec3 &pos = glm::vec3(0.0f),
            const glm::vec2 &scale = glm::vec2(1.0f),
            bool mipmap = false,
+           bool manual = false,
            bool arrange = false
           );
   TexQuad (const float win_aspect = 16.0f/9.0f,
            const glm::vec3 &pos = glm::vec3(0.0f),
            const glm::vec2 &scale = glm::vec2(1.0f),
            bool mipmap = false,
+           bool manual = false,
            bool arrange = false
           );
   ~TexQuad ();
@@ -90,6 +92,8 @@ public:
   void Unload ();
 
 protected:
+  void GenerateManualMips ();
+
   std::string img_path;
   float window_aspect;
   glm::vec3 position;
@@ -98,12 +102,14 @@ protected:
   std::vector<GLubyte> image_data;
   unsigned int img_width;
   unsigned int img_height;
+  std::vector<std::vector<GLubyte> > mip_data;
 
   GLint uniform_modelview;
   glm::mat4 view;
   GLuint texName;
 
   bool do_mipmap;
+  bool do_manual_mipmap;
   bool do_arrange;
 
 };

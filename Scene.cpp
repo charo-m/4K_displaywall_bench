@@ -245,6 +245,7 @@ void Scene::Load ()
                                      pos,
                                      starting_scale,
                                      do_mipmap,
+                                     do_manual_mipmap,
                                      do_arrange);
                    tq -> SetImageData (image_data, img_width, img_height);
                  }
@@ -254,6 +255,7 @@ void Scene::Load ()
                                      pos,
                                      starting_scale,
                                      do_mipmap,
+                                     do_manual_mipmap,
                                      do_arrange);
                  }
                 if (tq)
@@ -274,6 +276,7 @@ void Scene::Load ()
                             glm::vec3(0.0f),
                             starting_scale,
                             do_mipmap,
+                            do_manual_mipmap,
                             do_arrange);
            tq -> SetImageData (image_data, img_width, img_height);
          }
@@ -283,6 +286,7 @@ void Scene::Load ()
                             glm::vec3(0.0f),
                             starting_scale,
                             do_mipmap,
+                            do_manual_mipmap,
                             do_arrange);
          }
         if (tq)

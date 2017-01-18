@@ -45,6 +45,7 @@ namespace proto {
   int gl_version = 3;
   bool do_arrange = false;
   bool do_mipmap = false;
+  bool do_manual_mipmap = false;
   std::vector <std::string> image_paths;
   double test_length = 10.0;
   std::string test_mode;
@@ -107,6 +108,8 @@ void parse_args (int argc, char* argv[])
            do_arrange = (!strcmp(argv[i+1], "true")) ? true : false;
          else if (!strcmp(argv[i], "-mipmap"))
            do_mipmap = (!strcmp(argv[i+1], "true")) ? true : false;
+         else if (!strcmp(argv[i], "-manual"))
+           do_manual_mipmap = (!strcmp(argv[i+1], "true")) ? true : false;
          else if (!strcmp(argv[i], "-testlength"))
            test_length = atof(argv[i+1]);
          else if (!strcmp(argv[i], "-testmode"))
@@ -268,7 +271,7 @@ int main (int argc, char* argv[])
 
   scene = new Scene ();
   scene -> SetWindow (width, height);
-  scene -> SetImagePaths (image_paths, do_arrange, do_mipmap);
+  scene -> SetImagePaths (image_paths, do_arrange, do_mipmap, do_manual_mipmap);
   scene -> Setup ();
 
   double test_start = glfwGetTime ();

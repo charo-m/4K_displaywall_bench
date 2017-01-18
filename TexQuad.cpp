@@ -53,32 +53,61 @@ TexQuad::TexQuad (const std::string &path,
                   const glm::vec3 &pos,
                   const glm::vec2 &sc,
                   bool mipmap,
+                  bool manual,
                   bool arrange)
  : img_path(path),
    window_aspect(win_aspect),
    position(pos),
    scale(sc),
    do_mipmap(mipmap),
+   do_manual_mipmap(manual),
+   mip_data(6),
    do_arrange(arrange)
 {
+  std::cout << "mip_data size = " << mip_data.size() << std::endl;
+  GenerateManualMips ();
 }
 
 TexQuad::TexQuad (const float win_aspect,
                   const glm::vec3 &pos,
                   const glm::vec2 &sc,
                   bool mipmap,
+                  bool manual,
                   bool arrange)
  : window_aspect(win_aspect),
    position(pos),
    scale(sc),
    do_mipmap(mipmap),
+   do_manual_mipmap(manual),
+   mip_data(6),
    do_arrange(arrange)
 {
+  std::cout << "Generating false color mip_data, size = " << mip_data.size() << std::endl;
+  GenerateManualMips ();
 }
 
 TexQuad::~TexQuad ()
 {
   Unload ();
+}
+
+void TexQuad::GenerateManualMips ()
+{ const GLubyte fill_colors[6][4] = {
+  {255, 0, 0, 255},
+  {255, 127, 0, 255},
+  {255, 255, 0, 255},
+  {0, 255, 0, 255},
+  {0, 0, 255, 255},
+  {127, 0, 255, 255}
+  };
+  for (int i=0; i<6; i++) {
+    mip_data[i].resize(4096*4096*4);
+    auto iter = mip_data[i].begin();
+    for(std::size_t k = 1; k < 4096*4096; k++) {
+      std::copy(fill_colors[i], fill_colors[i]+4, iter);
+      std::advance(iter, 4);
+    }
+  }
 }
 
 void TexQuad::Load ()
@@ -95,22 +124,35 @@ void TexQuad::Load ()
 
   glGenTextures (1, &texName);
   glBindTexture (GL_TEXTURE_2D, texName);
-  if (!Util::in_test_mode)
-    std::cout << "Loading TexQuad " << img_path << " texture id is " << texName << std::endl;
+  //if (!Util::in_test_mode)
+    //std::cout << "Loading TexQuad " << img_path << " texture id is " << texName << std::endl;
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  //glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, &mip_data[0][0]);
   if (do_mipmap)
-    glGenerateMipmap (GL_TEXTURE_2D);
+    { if (do_manual_mipmap)
+        { int w = img_width / 2; int h = img_height / 2;  int l = 0;
+          while (w > 1 && h > 1)
+           { l++;
+             glTexImage2D (GL_TEXTURE_2D, l, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, &mip_data[l%6][0]);
+             //std::cout << "uploaded level " << l << "   " << w << "x" << h << std::endl;
+             w *= 0.5;
+             h *= 0.5;
+           }
+        }
+      else
+        { glGenerateMipmap (GL_TEXTURE_2D); }
+    }
   glBindTexture (GL_TEXTURE_2D, 0);
 
 }
 
 void TexQuad::Unload ()
-{ if (!Util::in_test_mode)
-    std::cout << "Unloading TexQuad " << img_path << " texture id is " << texName << std::endl;
+{ //if (!Util::in_test_mode)
+    //std::cout << "Unloading TexQuad " << img_path << " texture id is " << texName << std::endl;
   glDeleteTextures (1, &texName);
 }
 

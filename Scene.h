@@ -75,10 +75,13 @@ public:
     { window_width = w;  window_height = h; }
 
   void SetImagePaths (const std::vector <std::string> &paths,
-                      bool arrange, bool mipmap)
+                      bool arrange,
+                      bool mipmap,
+                      bool manual)
     { image_paths = paths;
       do_arrange = arrange;
-      do_mipmap = mipmap; }
+      do_mipmap = mipmap;
+      do_manual_mipmap = manual; }
 
   void SetTime (double t)
     { time = t; }
@@ -101,6 +104,7 @@ protected:
 
   bool do_arrange;
   bool do_mipmap;
+  bool do_manual_mipmap;
 
   GLuint vao;
   GLuint index_vbo;
