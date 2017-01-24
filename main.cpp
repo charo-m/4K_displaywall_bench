@@ -36,7 +36,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB 0x8242
 
 namespace proto {
   int width = 11520;
@@ -268,6 +267,8 @@ int main (int argc, char* argv[])
      }
   }
 #endif
+  if (glfwExtensionSupported ("GL_ARB_texture_storage"))
+    printf ("GL_ARB_texture_storage is supported\n");
 
   scene = new Scene ();
   scene -> SetWindow (width, height);
