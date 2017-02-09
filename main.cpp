@@ -42,7 +42,7 @@ namespace proto {
   int width = 11520;
   int height = 2160;
   int swap_interval = 0;
-  int gl_version = 3;
+  int gl_version = 4;
   bool do_arrange = false;
   bool do_mipmap = false;
   std::vector <std::string> image_paths;

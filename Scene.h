@@ -104,6 +104,10 @@ protected:
   GLuint vertex_vbo;
   GLuint texName;
 
+  GLuint fbo;
+  GLuint renderTexName;
+  GLuint depth_rbo;
+
   GLfloat vertex_array[20];
   GLushort index_array[6];
 
