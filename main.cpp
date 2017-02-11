@@ -55,6 +55,8 @@ namespace proto {
 using namespace proto;
 
 bool Util::in_test_mode = false;
+bool Util::blit = false;
+int Util::blit_rect[] = {0, 0, 0, 0};
 
 void help_msg (std::string prog)
 {
@@ -83,6 +85,17 @@ void validate_args ()
     gl_version = 3;
   if (!test_mode.empty())
     Util::in_test_mode = true;
+  if (Util::blit) {
+    if (Util::blit_rect[2] == 0 || Util::blit_rect[3] == 0) {
+      Util::blit_rect[2] = width;
+      Util::blit_rect[3] = height;
+    }
+    std::cout << "Blit rectangle is: " << Util::blit_rect[0] << ", "
+                                       << Util::blit_rect[1] << ", "
+                                       << Util::blit_rect[2] << ", "
+                                       << Util::blit_rect[3] << std::endl;
+  }
+
 }
 
 void parse_args (int argc, char* argv[])
@@ -93,30 +106,56 @@ void parse_args (int argc, char* argv[])
    {
      if (argv[i][0] == '-')
        {
-         if (!strcmp(argv[i], "-width"))
+         if (!strcmp(argv[i], "-width")) {
            width = atoi(argv[i+1]);
-         else if (!strcmp(argv[i], "-height"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-height")) {
            height = atoi(argv[i+1]);
-         else if (!strcmp(argv[i], "-swap_interval"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-swap_interval")) {
            swap_interval = atoi(argv[i+1]);
-         else if (!strcmp(argv[i], "-gl"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-gl")) {
            gl_version = atoi(argv[i+1]);
-         else if (!strcmp(argv[i], "-i"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-i")) {
            image_paths.push_back(argv[i+1]);
-         else if (!strcmp(argv[i], "-layout"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-layout")) {
            do_arrange = (!strcmp(argv[i+1], "true")) ? true : false;
-         else if (!strcmp(argv[i], "-mipmap"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-mipmap")) {
            do_mipmap = (!strcmp(argv[i+1], "true")) ? true : false;
-         else if (!strcmp(argv[i], "-testlength"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-testlength")) {
            test_length = atof(argv[i+1]);
-         else if (!strcmp(argv[i], "-testmode"))
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-testmode")) {
            test_mode = argv[i+1];
+           ++i;
+         }
+         else if (!strcmp(argv[i], "-blit")) {
+           Util::blit = true;
+         }
+         else if (!strcmp(argv[i], "-blit_rect")) {
+           Util::blit_rect[0] = atoi(argv[i+1]);
+           Util::blit_rect[1] = atoi(argv[i+2]);
+           Util::blit_rect[2] = atoi(argv[i+3]);
+           Util::blit_rect[3] = atoi(argv[i+4]);
+           i+=4;
+         }
          else if (!strcmp(argv[i], "-help") ||
                   !strcmp(argv[i], "--help"))
            help_msg (argv[0]);
 
-
-         ++i;
        }
    }
 }
@@ -244,8 +283,7 @@ int main (int argc, char* argv[])
 
   glfwSetKeyCallback (window, key_callback);
   glfwSetCursorPosCallback (window, cursor_pos_callback);
-
-#ifdef DEBUG
+#ifndef NDEBUG
   printf ("%s\n", glGetString (GL_VERSION));
 
   if (glfwExtensionSupported ("GL_ARB_debug_output")) {
@@ -263,6 +301,10 @@ int main (int argc, char* argv[])
        setDebugMsgControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
      }
   }
+
+  GLint maxy = -1;
+  glGetIntegerv (GL_MAX_TEXTURE_SIZE, &maxy);
+  printf ("MAX Texture Size = %d\n", maxy);
 #endif
 
   scene = new Scene ();

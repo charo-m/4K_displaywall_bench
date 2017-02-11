@@ -23,7 +23,10 @@ class Util {
 
 public:
 static bool in_test_mode;
+static bool blit;
+static int blit_rect[4];
 
+public:
 static bool compileShader (GLuint &shader, GLenum type,
                              const char *src)
 { shader = glCreateShader (type);
