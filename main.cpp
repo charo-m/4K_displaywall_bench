@@ -90,10 +90,11 @@ void validate_args ()
       Util::blit_rect[2] = width;
       Util::blit_rect[3] = height;
     }
-    std::cout << "Blit rectangle is: " << Util::blit_rect[0] << ", "
-                                       << Util::blit_rect[1] << ", "
-                                       << Util::blit_rect[2] << ", "
-                                       << Util::blit_rect[3] << std::endl;
+    if (!Util::in_test_mode)
+      std::cout << "Blit rectangle is: " << Util::blit_rect[0] << ", "
+                                         << Util::blit_rect[1] << ", "
+                                         << Util::blit_rect[2] << ", "
+                                         << Util::blit_rect[3] << std::endl;
   }
 
 }
@@ -270,7 +271,7 @@ int main (int argc, char* argv[])
   glfwGetFramebufferSize (window, &width, &height);
   glViewport (0, 0, width, height);
 
-  if (test_mode.empty())
+  if (!Util::in_test_mode)
    { int mon_count;
      GLFWmonitor** monitors = glfwGetMonitors (&mon_count);
      for (int i = 0; i < mon_count; ++i)
@@ -284,27 +285,29 @@ int main (int argc, char* argv[])
   glfwSetKeyCallback (window, key_callback);
   glfwSetCursorPosCallback (window, cursor_pos_callback);
 #ifndef NDEBUG
-  printf ("%s\n", glGetString (GL_VERSION));
+  if (!Util::in_test_mode)
+  { printf ("%s\n", glGetString (GL_VERSION));
 
-  if (glfwExtensionSupported ("GL_ARB_debug_output")) {
-    printf ("GL_ARB_debug_output is supported\n");
-    glDebugMessageCallbackARBPROC setDebugMsgCallback = 0;
-   setDebugMsgCallback =
-     (glDebugMessageCallbackARBPROC) glfwGetProcAddress ("glDebugMessageCallbackARB");
-   glDebugMessageControlARBPROC setDebugMsgControl = 0;
-   setDebugMsgControl =
-     (glDebugMessageControlARBPROC) glfwGetProcAddress ("glDebugMessageControlARB");
-   if (setDebugMsgCallback && setDebugMsgControl)
-     { glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-       setDebugMsgCallback (gl_debug_spewer, NULL);
-       GLuint unusedIds = 0;
-       setDebugMsgControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
-     }
+    if (glfwExtensionSupported ("GL_ARB_debug_output")) {
+      printf ("GL_ARB_debug_output is supported\n");
+      glDebugMessageCallbackARBPROC setDebugMsgCallback = 0;
+     setDebugMsgCallback =
+       (glDebugMessageCallbackARBPROC) glfwGetProcAddress ("glDebugMessageCallbackARB");
+     glDebugMessageControlARBPROC setDebugMsgControl = 0;
+     setDebugMsgControl =
+       (glDebugMessageControlARBPROC) glfwGetProcAddress ("glDebugMessageControlARB");
+     if (setDebugMsgCallback && setDebugMsgControl)
+       { glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+         setDebugMsgCallback (gl_debug_spewer, NULL);
+         GLuint unusedIds = 0;
+         setDebugMsgControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
+       }
+    }
+
+    GLint maxy = -1;
+    glGetIntegerv (GL_MAX_TEXTURE_SIZE, &maxy);
+    printf ("MAX Texture Size = %d\n", maxy);
   }
-
-  GLint maxy = -1;
-  glGetIntegerv (GL_MAX_TEXTURE_SIZE, &maxy);
-  printf ("MAX Texture Size = %d\n", maxy);
 #endif
 
   scene = new Scene ();
@@ -327,7 +330,7 @@ int main (int argc, char* argv[])
       glfwPollEvents ();
     }
 
-  if (!test_mode.empty())
+  if (Util::in_test_mode)
    { float mean = std::accumulate(perf_data.begin(), perf_data.end(), 0.0f) /
                float(perf_data.size());
      std::cout << mean;
