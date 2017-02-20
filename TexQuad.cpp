@@ -101,7 +101,9 @@ void TexQuad::Load ()
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  GLint num_mips = log2(std::max(img_width, img_height)) + 1;
+  glTexStorage2D (GL_TEXTURE_2D, num_mips, GL_RGBA8, img_width, img_height);
+  glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, img_width, img_height, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
   if (do_mipmap)
     glGenerateMipmap (GL_TEXTURE_2D);
   glBindTexture (GL_TEXTURE_2D, 0);

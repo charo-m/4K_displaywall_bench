@@ -316,7 +316,7 @@ void Scene::Setup ()
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glGenTextures(1, &renderTexName);
     glBindTexture(GL_TEXTURE_2D, renderTexName);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width, window_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA8, window_width, window_height);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glGenRenderbuffers(1, &depth_rbo);
@@ -340,7 +340,6 @@ void Scene::Draw ()
   if (Util::blit) {
     // Bind fbo
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glViewport(0, 0, window_width, window_height);
 
     // will restrict the clear as well as draw
     glScissor(Util::blit_rect[0], Util::blit_rect[1],

@@ -41,6 +41,8 @@
 namespace proto {
   int width = 11520;
   int height = 2160;
+  int xoff = 0;
+  int yoff = 0;
   int swap_interval = 0;
   int gl_version = 4;
   bool do_arrange = false;
@@ -70,6 +72,9 @@ void help_msg (std::string prog)
   std::cout << "    -mipmap [true | false]" << std::endl;
   std::cout << "    -testlength [seconds] (5.0 seconds default)" << std::endl;
   std::cout << "    -testmode [fps | vram] (compute average of specified for testlength" << std::endl;
+  std::cout << "    -blit (enables render-to-texture and blit to back buffer mode)" << std::endl;
+  std::cout << "    -blit_rect (only render and blit inside of this rectangle)" << std::endl;
+  std::cout << "    -offset (specify window position)" << std::endl;
   exit (EXIT_SUCCESS);
 }
 
@@ -152,6 +157,11 @@ void parse_args (int argc, char* argv[])
            Util::blit_rect[2] = atoi(argv[i+3]);
            Util::blit_rect[3] = atoi(argv[i+4]);
            i+=4;
+         }
+         else if (!strcmp(argv[i], "-offset")) {
+           xoff = atoi(argv[i+1]);
+           yoff = atoi(argv[i+2]);
+           i+=2;
          }
          else if (!strcmp(argv[i], "-help") ||
                   !strcmp(argv[i], "--help"))
@@ -244,7 +254,7 @@ int main (int argc, char* argv[])
 
   // Context configuration
   glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, gl_version);
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, gl_version);
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint (GLFW_CLIENT_API, GLFW_OPENGL_API);
   // Framebuffer
   glfwWindowHint (GLFW_DEPTH_BITS, 24);   // default
@@ -270,6 +280,7 @@ int main (int argc, char* argv[])
 
   glfwGetFramebufferSize (window, &width, &height);
   glViewport (0, 0, width, height);
+  glfwSetWindowPos (window, xoff, yoff);
 
   if (!Util::in_test_mode)
    { int mon_count;
