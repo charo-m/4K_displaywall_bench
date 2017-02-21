@@ -43,8 +43,13 @@
 
 #include "util.h"
 
-using namespace proto;
+namespace proto {
+  int idiv_ceil(int n, int d)
+    { return (n + d - 1) / d; }
+}
 
+
+using namespace proto;
 
 
 
@@ -92,6 +97,38 @@ void TexQuad::Load ()
       return;
    }
 
+  rgba_surface surface;
+  surface.width = img_width;
+  surface.height = img_height;
+  surface.stride = img_width * 4;
+  surface.ptr = new uint8_t[surface.stride * surface.height];
+  std::copy(image_data.begin(), image_data.end(), surface.ptr);
+
+  int block_width = 6;
+  int block_height = 6;
+  rgba_surface out;
+  out.width = idiv_ceil(surface.width, block_width);
+  out.height = idiv_ceil(surface.height, block_height);
+  out.stride = out.width * 16;
+  out.ptr = new uint8_t[out.stride * out.height];
+
+  rgba_surface padded;
+  padded.width = out.width * block_width;
+  padded.height = out.height * block_height;
+  padded.stride = padded.width * 4;
+  padded.ptr = new uint8_t[padded.height * padded.stride];
+  ReplicateBorders(&padded, &surface, 0, 0, 32);
+  //compress_astc_tex(&out, &padded, block_width, block_height);
+  astc_enc_settings settings;
+  GetProfile_astc_alpha_fast(&settings, block_width, block_height);
+  CompressBlocksASTC(&padded, out.ptr, &settings);
+
+  int xblocks = out.width;
+  int yblocks = out.height;
+  int zblocks = 1;
+  // Total compressed image data size (one block is encoded into 16 bytes)
+  int n_bytes_to_read = xblocks * yblocks * zblocks << 4;
+
 
   glGenTextures (1, &texName);
   glBindTexture (GL_TEXTURE_2D, texName);
@@ -101,9 +138,10 @@ void TexQuad::Load ()
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  GLint num_mips = log2(std::max(img_width, img_height)) + 1;
-  glTexStorage2D (GL_TEXTURE_2D, num_mips, GL_RGBA8, img_width, img_height);
-  glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, img_width, img_height, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  //GLint num_mips = log2(std::max(img_width, img_height)) + 1;
+  //glTexStorage2D (GL_TEXTURE_2D, num_mips, GL_RGBA8, img_width, img_height);
+  //glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, img_width, img_height, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
+  glCompressedTexImage2D (GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_ASTC_6x6_KHR, img_width, img_height, 0, n_bytes_to_read, out.ptr);
   if (do_mipmap)
     glGenerateMipmap (GL_TEXTURE_2D);
   glBindTexture (GL_TEXTURE_2D, 0);

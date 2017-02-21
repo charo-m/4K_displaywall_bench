@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include <png/lodepng.h>
+#include "ispc_texcomp.h"
 
 
 #define GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX 0x9049

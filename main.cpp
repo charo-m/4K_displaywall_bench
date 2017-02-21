@@ -254,7 +254,7 @@ int main (int argc, char* argv[])
 
   // Context configuration
   glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, gl_version);
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint (GLFW_CLIENT_API, GLFW_OPENGL_API);
   // Framebuffer
   glfwWindowHint (GLFW_DEPTH_BITS, 24);   // default
@@ -318,6 +318,19 @@ int main (int argc, char* argv[])
     GLint maxy = -1;
     glGetIntegerv (GL_MAX_TEXTURE_SIZE, &maxy);
     printf ("MAX Texture Size = %d\n", maxy);
+
+    if (glfwExtensionSupported ("GL_KHR_texture_compression_astc_ldr")) {
+      std::cout << "GL_KHR_texture_compression_astc_ldr is supported" << std::endl;
+    }
+    GLint num_fmts = 0;
+    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &num_fmts);
+    if (num_fmts > 0)
+    {
+      GLint* formats = new GLint[num_fmts];
+      glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, formats);
+      std::cout << formats[0] << std::endl;
+      delete[] formats;
+    }
   }
 #endif
 

@@ -7,6 +7,8 @@ HunterGate(
 )
 project(4K_displaywall_bench)
 
+set(ISPCTC "../ISPCTextureCompressor/ISPC Texture Compressor")
+
 if(MSVC)
   hunter_add_package(glfw)
   find_package(glfw3 REQUIRED)
@@ -26,7 +28,7 @@ else()
 endif()
 
 add_executable (4K_displaywall_bench main.cpp Scene.cpp TexQuad.cpp png/lodepng.cpp glad/glad.c)
-target_include_directories(4K_displaywall_bench PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" ${dep_includes})
+target_include_directories(4K_displaywall_bench PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" ${dep_includes} "${ISPCTC}/ispc_texcomp")
 target_compile_definitions(4K_displaywall_bench PRIVATE _USE_MATH_DEFINES)
 target_compile_options(4K_displaywall_bench PRIVATE ${dep_flags})
-target_link_libraries(4K_displaywall_bench PRIVATE ${dep_libraries})
+target_link_libraries(4K_displaywall_bench PRIVATE ${dep_libraries} ispc_texcomp  -L"${ISPCTC}/build")
