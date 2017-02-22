@@ -8,6 +8,7 @@ HunterGate(
 project(4K_displaywall_bench)
 
 set(ISPCTC "../ISPCTextureCompressor/ISPC Texture Compressor")
+set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
   hunter_add_package(glfw)

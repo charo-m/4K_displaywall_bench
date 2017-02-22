@@ -5,6 +5,10 @@ While most benchmarks are intended for the gaming industry, this simple app is f
 
 #Building
 
+##ISPCTextureCompressor
+   git clone https://github.com/GameTechDev/ISPCTextureCompressor.git ../ISPCTextureCompressor
+   (follow readme.md)
+
 ##Ubuntu 16.04
 
     apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libglfw3-dev libglm-dev
@@ -30,7 +34,7 @@ Use cmake flag -DCMAKE_BUILD_TYPE=Debug to enable OpenGL debug output extension 
 
 Use the width and height to define the viewport, which may span multiple displays.
 
-If your driver does not support OpenGL 4.4 (GLXBadFBConfig), run with -gl 3 for a version 3.3 context.
+If your driver does not support OpenGL 4.5 (GLXBadFBConfig), run with -gl 3.3 for a version 3.3 context.
 
 #Testing
 

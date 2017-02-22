@@ -41,7 +41,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "util.h"
 
 namespace proto {
   int idiv_ceil(int n, int d)
@@ -66,6 +65,7 @@ TexQuad::TexQuad (const std::string &path,
    do_mipmap(mipmap),
    do_arrange(arrange)
 {
+   compressed_image.ptr = nullptr;
 }
 
 TexQuad::TexQuad (const float win_aspect,
@@ -79,6 +79,7 @@ TexQuad::TexQuad (const float win_aspect,
    do_mipmap(mipmap),
    do_arrange(arrange)
 {
+   compressed_image.ptr = nullptr;
 }
 
 TexQuad::~TexQuad ()
@@ -86,17 +87,8 @@ TexQuad::~TexQuad ()
   Unload ();
 }
 
-void TexQuad::Load ()
+void TexQuad::Compress ()
 {
-  bool result = true;
-  // Load texture: load image, generate texture, upload texture
-  if (image_data.size() == 0)
-    result = Util::decode_png_image(image_data, img_width, img_height, img_path);
-  if (!result || image_data.size() == 0)
-   {  std::cout << "No image data!" << std::endl;
-      return;
-   }
-
   rgba_surface surface;
   surface.width = img_width;
   surface.height = img_height;
@@ -106,28 +98,43 @@ void TexQuad::Load ()
 
   int block_width = 6;
   int block_height = 6;
-  rgba_surface out;
-  out.width = idiv_ceil(surface.width, block_width);
-  out.height = idiv_ceil(surface.height, block_height);
-  out.stride = out.width * 16;
-  out.ptr = new uint8_t[out.stride * out.height];
+  compressed_image.width = idiv_ceil(surface.width, block_width);
+  compressed_image.height = idiv_ceil(surface.height, block_height);
+  compressed_image.stride = compressed_image.width * 16;
+  compressed_image.ptr = new uint8_t[compressed_image.stride * compressed_image.height];
 
   rgba_surface padded;
-  padded.width = out.width * block_width;
-  padded.height = out.height * block_height;
+  padded.width = compressed_image.width * block_width;
+  padded.height = compressed_image.height * block_height;
   padded.stride = padded.width * 4;
   padded.ptr = new uint8_t[padded.height * padded.stride];
   ReplicateBorders(&padded, &surface, 0, 0, 32);
-  //compress_astc_tex(&out, &padded, block_width, block_height);
   astc_enc_settings settings;
   GetProfile_astc_alpha_fast(&settings, block_width, block_height);
-  CompressBlocksASTC(&padded, out.ptr, &settings);
+  CompressBlocksASTC(&padded, compressed_image.ptr, &settings);
 
-  int xblocks = out.width;
-  int yblocks = out.height;
+  int xblocks = compressed_image.width;
+  int yblocks = compressed_image.height;
   int zblocks = 1;
-  // Total compressed image data size (one block is encoded into 16 bytes)
-  int n_bytes_to_read = xblocks * yblocks * zblocks << 4;
+  // Total compressed image data size (each block is encoded into 16 bytes)
+  num_compressed_bytes = xblocks * yblocks * zblocks << 4;
+  delete [] surface.ptr;
+  delete [] padded.ptr;
+}
+
+void TexQuad::Load ()
+{
+  bool result = true;
+  // Load texture: load image, generate texture, upload texture
+  if (image_data.size() == 0)
+    { result = Util::decode_png_image(image_data, img_width, img_height, img_path);
+      if (!result || image_data.size() == 0)
+      {  std::cout << "No image data!" << std::endl;
+         return;
+      }
+      if (Util::compress)
+        Compress ();
+    }
 
 
   glGenTextures (1, &texName);
@@ -138,18 +145,28 @@ void TexQuad::Load ()
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  //GLint num_mips = log2(std::max(img_width, img_height)) + 1;
-  //glTexStorage2D (GL_TEXTURE_2D, num_mips, GL_RGBA8, img_width, img_height);
-  //glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, img_width, img_height, GL_BGRA, GL_UNSIGNED_BYTE, &image_data[0]);
-  glCompressedTexImage2D (GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_ASTC_6x6_KHR, img_width, img_height, 0, n_bytes_to_read, out.ptr);
+  if (Util::compress)
+    { glCompressedTexImage2D (GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_ASTC_6x6_KHR,
+                              img_width, img_height, 0, num_compressed_bytes,
+                               compressed_image.ptr);
+    }
+  else
+    { GLint num_mips = log2(std::max(img_width, img_height)) + 1;
+      glTexStorage2D (GL_TEXTURE_2D, num_mips, GL_RGBA8, img_width, img_height);
+      glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, img_width, img_height, GL_BGRA,
+                       GL_UNSIGNED_BYTE, &image_data[0]);
+    }
   if (do_mipmap)
     glGenerateMipmap (GL_TEXTURE_2D);
+
   glBindTexture (GL_TEXTURE_2D, 0);
 
 }
 
 void TexQuad::Unload ()
 { glDeleteTextures (1, &texName);
+  if (compressed_image.ptr)
+    delete [] compressed_image.ptr;
 }
 
 void TexQuad::Setup ()

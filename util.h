@@ -26,6 +26,7 @@ public:
 static bool in_test_mode;
 static bool blit;
 static int blit_rect[4];
+static bool compress;
 
 public:
 static bool compileShader (GLuint &shader, GLenum type,

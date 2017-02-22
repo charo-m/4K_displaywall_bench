@@ -44,7 +44,8 @@ namespace proto {
   int xoff = 0;
   int yoff = 0;
   int swap_interval = 0;
-  int gl_version = 4;
+  int gl_version_maj = 4;
+  int gl_version_min = 5;
   bool do_arrange = false;
   bool do_mipmap = false;
   std::vector <std::string> image_paths;
@@ -59,6 +60,7 @@ using namespace proto;
 bool Util::in_test_mode = false;
 bool Util::blit = false;
 int Util::blit_rect[] = {0, 0, 0, 0};
+bool Util::compress = false;
 
 void help_msg (std::string prog)
 {
@@ -66,7 +68,7 @@ void help_msg (std::string prog)
   std::cout << "    -width [w]" << std::endl;
   std::cout << "    -height [h]" << std::endl;
   std::cout << "    -swap_interval [0 (disable vsync) or 1 (enable vsync)]" << std::endl;
-  std::cout << "    -gl [3 (OpenGL version 3.3) or 4 (OpenGL version 4.4, default)]" << std::endl;
+  std::cout << "    -gl [major_version.minor_version (OpenGL version 4.5, default)]" << std::endl;
   std::cout << "    -i [image path] (for each image you want to display)" << std::endl;
   std::cout << "    -layout [true | false] (true = grid, false = overlap)" << std::endl;
   std::cout << "    -mipmap [true | false]" << std::endl;
@@ -86,8 +88,8 @@ void validate_args ()
     height = 480;
   if (!(swap_interval == 0 || swap_interval == 1))
     swap_interval = 0;
-  if (!(gl_version == 3 || gl_version == 4))
-    gl_version = 3;
+  if (!(gl_version_maj == 3 || gl_version_maj == 4))
+    gl_version_maj = 3;
   if (!test_mode.empty())
     Util::in_test_mode = true;
   if (Util::blit) {
@@ -125,7 +127,7 @@ void parse_args (int argc, char* argv[])
            ++i;
          }
          else if (!strcmp(argv[i], "-gl")) {
-           gl_version = atoi(argv[i+1]);
+           sscanf(argv[i+1], "%d.%d", &gl_version_maj, &gl_version_min);
            ++i;
          }
          else if (!strcmp(argv[i], "-i")) {
@@ -162,6 +164,9 @@ void parse_args (int argc, char* argv[])
            xoff = atoi(argv[i+1]);
            yoff = atoi(argv[i+2]);
            i+=2;
+         }
+         else if (!strcmp(argv[i], "-compress")) {
+           Util::compress = true;
          }
          else if (!strcmp(argv[i], "-help") ||
                   !strcmp(argv[i], "--help"))
@@ -253,8 +258,11 @@ int main (int argc, char* argv[])
       exit (EXIT_FAILURE);
 
   // Context configuration
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, gl_version);
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 5);
+  if (!Util::in_test_mode)
+    std::cout << "Creating context with GL version "
+              << gl_version_maj << "." << gl_version_min << std::endl;
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, gl_version_maj);
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, gl_version_min);
   glfwWindowHint (GLFW_CLIENT_API, GLFW_OPENGL_API);
   // Framebuffer
   glfwWindowHint (GLFW_DEPTH_BITS, 24);   // default
@@ -321,15 +329,6 @@ int main (int argc, char* argv[])
 
     if (glfwExtensionSupported ("GL_KHR_texture_compression_astc_ldr")) {
       std::cout << "GL_KHR_texture_compression_astc_ldr is supported" << std::endl;
-    }
-    GLint num_fmts = 0;
-    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &num_fmts);
-    if (num_fmts > 0)
-    {
-      GLint* formats = new GLint[num_fmts];
-      glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, formats);
-      std::cout << formats[0] << std::endl;
-      delete[] formats;
     }
   }
 #endif

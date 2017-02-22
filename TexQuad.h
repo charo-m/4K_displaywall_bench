@@ -46,9 +46,11 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "util.h"
 
 
 namespace proto {
+
 
 class TexQuad {
 
@@ -76,7 +78,12 @@ public:
   void SetImageData (const std::vector<GLubyte> &imgdata,
                      unsigned int imgwidth,
                      unsigned int imgheight)
-    { image_data = imgdata; img_width = imgwidth; img_height = imgheight; }
+    { image_data = imgdata;
+      img_width = imgwidth;
+      img_height = imgheight;
+      if (Util::compress)
+        Compress ();
+    }
   void SetViewMatrix (GLint uniform, const glm::mat4 &mat)
     { uniform_modelview = uniform;  view = mat; }
 
@@ -87,6 +94,7 @@ public:
   };
 
 protected:
+  void Compress ();
   void Load ();
   void Unload ();
 
@@ -106,6 +114,9 @@ protected:
 
   bool do_mipmap;
   bool do_arrange;
+
+  int num_compressed_bytes;
+  rgba_surface compressed_image;
 
 };
 
